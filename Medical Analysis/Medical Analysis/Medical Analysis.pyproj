@@ -24,6 +24,12 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Medical_Analysis.py" />
+    <Compile Include="data_reading.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="visualisation.py">
+      <SubType>Code</SubType>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <InterpreterReference Include="Global|PythonCore|3.10" />
