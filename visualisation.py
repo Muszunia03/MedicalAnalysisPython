@@ -14,7 +14,7 @@ def display_interactive_slices_multichannel(volume):
     # Initialize plots for each channel
     for i in range(num_channels):
         axes[i].set_title(f'Channel {i + 1}, Slice {current_slice + 1}/{num_slices}')
-        img = axes[i].imshow(volume[:, :, current_slice, i], cmap='pink')
+        img = axes[i].imshow(volume[:, :, current_slice, i], cmap='Oranges')
         img_displays.append(img)
         axes[i].axis('off')
 
