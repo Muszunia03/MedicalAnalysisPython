@@ -14,7 +14,7 @@ def display_interactive_slices_multichannel(volume):
     # Initialize plots for each channel
     for i in range(num_channels):
         axes[i].set_title(f'Channel {i + 1}, Slice {current_slice + 1}/{num_slices}')
-        img = axes[i].imshow(volume[:, :, current_slice, i], cmap='gray')
+        img = axes[i].imshow(volume[:, :, current_slice, i], cmap='Purples')
         img_displays.append(img)
         axes[i].axis('off')
 
@@ -34,7 +34,7 @@ def display_interactive_slices_multichannel(volume):
     plt.show()
 
 # Path to your NIfTI file (adjust the path accordingly)
-nifti_file_path = '/Users/jas1ek/Documents/MedicalAnalysisPython/Task01_BrainTumour/imagesTr/BRATS_001.nii.gz'
+nifti_file_path = '/Users/juliamarek/Downloads/BRATS_002.nii.gz'
 
 # Load the NIfTI file
 nifti_img = nib.load(nifti_file_path)
