@@ -23,43 +23,35 @@ def render_timepoint(time_index, plotter, num_timepoints, data):
     # Render the plot
     plotter.render()
 
-# Callback to go to the previous MRI
-def previous_MRI(dir_looper, data_dir):
-    if dir_looper == 0:
-        return os.listdir(data_dir).__sizeof__
-    else:
-        return dir_looper - 1
+# Function to display slices of a 4D volume (multiple channels) with interactive navigation
+def display_interactive_slices_multichannel(data):
+    num_slices = data.shape[2]  # Number of slices along the Z-axis
+    num_channels = data.shape[3]  # Number of channels (assumed to be 4)
+    current_slice = num_slices // 2  # Start at the middle slice
 
-# Callback to go to the next MRI
-def next_MRI(dir_looper, data_dir):
-    if dir_looper < os.listdir(data_dir).__sizeof__:
-        return dir_looper+1
-    else:
-        return 0
+    fig, axes = plt.subplots(1, num_channels, figsize=(15, 5))
+    img_displays = []
 
+    # Initialize plots for each channel
+    for i in range(num_channels):
+        axes[i].set_title(f'Channel {i + 1}, Slice {current_slice + 1}/{num_slices}')
+        img = axes[i].imshow(data[:, :, current_slice, i], cmap='gray')
+        img_displays.append(img)
+        axes[i].axis('off')
 
-def show_slice(data, slice):
-    data.shape
-    plt.imshow(data[slice], cmap='Greys_r')
-    plt.axis('off')
-    plt.show()
+    def on_key(event):
+        nonlocal current_slice
+        if event.key == 'right':
+            current_slice = (current_slice + 1) % num_slices  # Move forward
+        elif event.key == 'left':
+            current_slice = (current_slice - 1) % num_slices  # Move backward
+        # Update plots for all channels
+        for i in range(num_channels):
+            axes[i].set_title(f'Channel {i + 1}, Slice {current_slice + 1}/{num_slices}')
+            img_displays[i].set_data(data[:, :, current_slice, i])
+        fig.canvas.draw()
 
-def slice_plot(data):
-    fig_rows = 4
-    fig_cols = 4
-    n_subplots = fig_rows * fig_cols
-    n_slice = data.shape[0]
-    step_size = n_slice // n_subplots
-    plot_range = n_subplots * step_size
-    start_stop = int((n_slice - plot_range) / 2)
-
-    fig, axs = plt.subplots(fig_rows, fig_cols, figsize=[10, 10])
-
-    for idx, img in enumerate(range(start_stop, plot_range, step_size)):
-        axs.flat[idx].imshow(ndi.rotate(data[img, :, :], 90), cmap='Greys_r')
-        axs.flat[idx].axis('off')
-        
-    plt.tight_layout()
+    fig.canvas.mpl_connect('key_press_event', on_key)
     plt.show()
 
 

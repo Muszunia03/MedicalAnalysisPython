@@ -12,6 +12,10 @@ dir_looper = 0
 img = data_reading.read_data_from_path("E:\GitHub\MedicalAnalysisPython\Task01_BrainTumour\imagesTr", dir_looper)
 data = img.get_fdata()
 
+#accessing data from github repo
+# data_arr = data_reading.read_data_from_github()
+# data = data_arr[0].get_fdata()
+
 # Extract the number of time points (or 4th dimension size)
 num_timepoints = data.shape[3]
 
@@ -43,13 +47,9 @@ def next_timepoint():
 plotter.add_text("Use arrows to navigate timepoints", position='lower_left', font_size=10)
 plotter.add_key_event("Left", previous_timepoint)
 plotter.add_key_event("Right", next_timepoint)
-# plotter.add_key_event("Up", visualisation.previous_MRI(dir_looper, "E:\GitHub\MedicalAnalysisPython\Task01_BrainTumour\imagesTr"))
-# plotter.add_key_event("Down", visualisation.next_MRI(dir_looper, "E:\GitHub\MedicalAnalysisPython\Task01_BrainTumour\imagesTr"))
 
 # Show the plot
 plotter.show()
 
 #Shows a slice of the scan
-visualisation.show_slice(data, 96) #shows single lice
-
-visualisation.slice_plot(data) #shows a couple of silces
+visualisation.display_interactive_slices_multichannel(data)
