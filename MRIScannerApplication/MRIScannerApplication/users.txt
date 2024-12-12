@@ -1,0 +1,5 @@
+Admin-admin@example.com-Admin-admin123
+Doctor-mmmail-Mikolaj-123
+Doctor-123-123-123
+Patient-ma-Mi-123-30-no medical
+Patient-emailmymail-Mikolaj-123456-30-none

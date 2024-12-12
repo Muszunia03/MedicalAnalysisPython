@@ -1,0 +1,27 @@
+[
+    {
+        "user_id": 1,
+        "name": "Admin",
+        "email": "admin@example.com",
+        "password": "admin123",
+        "type": "Admin"
+    },
+    {
+        "user_id": 201,
+        "name": "Dr. Smith",
+        "email": "dr.smith@example.com",
+        "password": "doctor123",
+        "specialization": "Radiology",
+        "type": "Doctor"
+    },
+    {
+        "user_id": 101,
+        "name": "John Doe",
+        "email": "john.doe@example.com",
+        "password": "patient123",
+        "age": 35,
+        "medical_history": "No allergies",
+        "scan_results": [],
+        "type": "Patient"
+    }
+]
