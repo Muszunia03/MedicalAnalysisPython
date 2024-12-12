@@ -6,7 +6,7 @@ from tensorflow.keras import layers, models
 def unet_model(input_size=(128, 128, 1)):
     inputs = layers.Input(input_size)
 
-    # Czêœæ kurcz¹ca siê (encoding)
+    # Czï¿½ï¿½ kurczï¿½ca siï¿½ (encoding)
     c1 = layers.Conv2D(64, (3, 3), activation='relu', padding='same')(inputs)
     c1 = layers.Conv2D(64, (3, 3), activation='relu', padding='same')(c1)
     p1 = layers.MaxPooling2D((2, 2))(c1)
@@ -19,11 +19,11 @@ def unet_model(input_size=(128, 128, 1)):
     c3 = layers.Conv2D(256, (3, 3), activation='relu', padding='same')(c3)
     p3 = layers.MaxPooling2D((2, 2))(c3)
 
-    # Warstwa „bottleneck” (najg³êbsza warstwa)
+    # Warstwa ï¿½bottleneckï¿½ (najgï¿½ï¿½bsza warstwa)
     c4 = layers.Conv2D(512, (3, 3), activation='relu', padding='same')(p3)
     c4 = layers.Conv2D(512, (3, 3), activation='relu', padding='same')(c4)
 
-    # Czêœæ rozszerzaj¹ca siê (decoding)
+    # Czï¿½ï¿½ rozszerzajï¿½ca siï¿½ (decoding)
     u5 = layers.UpSampling2D((2, 2))(c4)
     u5 = layers.Conv2D(256, (2, 2), activation='relu', padding='same')(u5)
     u5 = layers.concatenate([u5, c3])
@@ -42,7 +42,7 @@ def unet_model(input_size=(128, 128, 1)):
     c7 = layers.Conv2D(64, (3, 3), activation='relu', padding='same')(u7)
     c7 = layers.Conv2D(64, (3, 3), activation='relu', padding='same')(c7)
 
-    # Warstwa wyjœciowa z mask¹ segmentacji
+    # Warstwa wyjï¿½ciowa z maskï¿½ segmentacji
     outputs = layers.Conv2D(1, (1, 1), activation='sigmoid')(c7)
 
     model = models.Model(inputs=[inputs], outputs=[outputs])
