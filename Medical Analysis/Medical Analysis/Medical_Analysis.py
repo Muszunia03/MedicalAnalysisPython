@@ -9,7 +9,7 @@ import keyboard
 
 # Load the NIfTI file (assumed to be 4D)
 dir_looper = 0
-img = data_reading.read_data_from_path("E:\GitHub\MedicalAnalysisPython\Task01_BrainTumour\imagesTr", dir_looper)
+img = data_reading.read_data_from_path("../Task01_BrainTumour/imagesTr", dir_looper)
 data = img.get_fdata()
 
 #accessing data from github repo
