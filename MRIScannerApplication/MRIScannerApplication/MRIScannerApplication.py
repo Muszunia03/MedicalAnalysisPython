@@ -1,10 +1,57 @@
+import os
 import tkinter as tk
 from tkinter import Image, Tk, Label, Entry, Button, Toplevel, messagebox, simpledialog
 from tkinter import filedialog
+from PIL import Image  # Ensure Pillow is installed
+
+class AdminOptions:
+    def __init__(self, root, auth_system):
+        self.root = Toplevel(root)
+        self.auth_system = auth_system
+
+        self.root.title("Admin Options")
+        self.root.geometry("400x300")
+
+        Label(self.root, text="Admin Options", font=("Helvetica", 16)).pack(pady=10)
+
+        # Button for viewing all users
+        Button(self.root, text="View All Users", command=self.view_all_users).pack(pady=5)
+        
+        # Button for searching a user
+        Button(self.root, text="Search User", command=self.search_user).pack(pady=5)
+        
+        # Button for logging out
+        Button(self.root, text="Logout", command=self.logout).pack(pady=10)
+
+    def view_all_users(self):
+        # Display information about all users in the system
+        users = self.auth_system.users
+        if users:
+            user_info = "\n".join([user.display_info() for user in users])
+            messagebox.showinfo("All Users", user_info)
+        else:
+            messagebox.showinfo("All Users", "No users found.")
+
+    def search_user(self):
+        # Search for a specific user by email
+        email = simpledialog.askstring("Search User", "Enter the email of the user:")
+        if email:
+            user = next((u for u in self.auth_system.users if u.email == email), None)
+            if user:
+                messagebox.showinfo("User Found", user.display_info())
+            else:
+                messagebox.showerror("Error", "User not found.")
+
+    def logout(self):
+        # Close the admin options window and show the main login window
+        self.root.destroy()
+        self.root.master.deiconify()
+
 
 class FileHandler:
     def __init__(self, file_name="users.txt"):
-        self.file_name = file_name
+        # Use os.path to ensure compatibility across platforms
+        self.file_name = os.path.abspath(file_name)
 
     def read_users_from_file(self):
         users = []
@@ -50,25 +97,28 @@ class PatientOptions:
 
         Label(self.root, text="Patient Options", font=("Helvetica", 16)).pack(pady=10)
 
-        # Button for uploading MRI scan
         Button(self.root, text="Upload MRI Scan", command=self.upload_scan).pack(pady=5)
-
-        # Show patient's MRI scan (if any)
         Button(self.root, text="View My MRI Scan", command=self.view_scan).pack(pady=5)
-
         Button(self.root, text="Logout", command=self.logout).pack(pady=10)
 
     def upload_scan(self):
-        file_path = filedialog.askopenfilename(title="Select MRI scan", filetypes=[("Image files", "*.jpg;*.jpeg;*.png;*.bmp")])
+        file_path = filedialog.askopenfilename(
+            title="Select MRI scan",
+            filetypes=[("Image files", "*.jpg;*.jpeg;*.png;*.bmp")]
+        )
         if file_path:
             self.patient.upload_scan(file_path)
-            self.auth_system.save_users()  # Save the user's updated scan path
+            self.auth_system.save_users()
             messagebox.showinfo("Upload Successful", "Your MRI scan has been uploaded.")
 
     def view_scan(self):
-        if self.patient.get_scan():
-            img = Image.open(self.patient.get_scan())
-            img.show()  # Open the image in the default image viewer
+        scan_path = self.patient.get_scan()
+        if scan_path and os.path.exists(scan_path):
+            try:
+                img = Image.open(scan_path)
+                img.show()  # Open the image using the default viewer
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to open the image: {e}")
         else:
             messagebox.showerror("Error", "You have not uploaded an MRI scan.")
 
@@ -89,22 +139,22 @@ class User:
     def get_user_info(self):
         return [self.email, self.name, self.password]
 
+
 class Patient(User):
     def __init__(self, email, name, password, age, medical_history, scan_path=None):
         super().__init__(email, name, password)
         self.age = age
         self.medical_history = medical_history
-        self.scan_path = scan_path 
+        self.scan_path = scan_path
 
     def get_user_info(self):
         return [self.email, self.name, self.password, str(self.age), self.medical_history]
 
     def upload_scan(self, file_path):
-        self.scan_path = file_path 
+        self.scan_path = file_path
 
     def get_scan(self):
         return self.scan_path
-
 
 
 class Doctor(User):
@@ -153,93 +203,6 @@ class AuthenticationSystem:
 
 class LoginApp:
     def __init__(self, root, auth_system):
-        self.auth_system = auth_system
-        self.root = root
-        self.root.title("User Authentication")
-
-        self.label_email = tk.Label(root, text="Email:")
-        self.label_email.grid(row=0, column=0, padx=5, pady=5)
-        self.entry_email = tk.Entry(root)
-        self.entry_email.grid(row=0, column=1, padx=5, pady=5)
-
-        self.label_password = tk.Label(root, text="Password:")
-        self.label_password.grid(row=1, column=0, padx=5, pady=5)
-        self.entry_password = tk.Entry(root, show="*")
-        self.entry_password.grid(row=1, column=1, padx=5, pady=5)
-
-        self.button_login = tk.Button(root, text="Login", command=self.login)
-        self.button_login.grid(row=2, column=0, padx=5, pady=5)
-
-        self.button_register = tk.Button(root, text="Register", command=self.register)
-        self.button_register.grid(row=2, column=1, padx=5, pady=5)
-
-    def login(self):
-        email = self.entry_email.get()
-        password = self.entry_password.get()
-        user = self.auth_system.login(email, password)
-        if user:
-            messagebox.showinfo("Success", f"Welcome, {user.name}!")
-            self.show_user_options(user)
-        else:
-            messagebox.showerror("Error", "Invalid email or password.")
-
-    def register(self):
-        email = self.entry_email.get()
-        name = simpledialog.askstring("Input", "Enter your name:")
-        password = self.entry_password.get()
-        self.auth_system.create_patient_account(email, name, password)
-        messagebox.showinfo("Success", "Patient account created successfully!")
-
-    def show_user_options(self, user):
-        if isinstance(user, Admin):
-            messagebox.showinfo("Admin", "Admin-specific functionality here.")
-        elif isinstance(user, Doctor):
-            messagebox.showinfo("Doctor", "Doctor-specific functionality here.")
-        elif isinstance(user, Patient):
-            messagebox.showinfo("Patient", "Patient-specific functionality here.")
-
-class AdminOptions:
-    def __init__(self, root, auth_system):
-        self.root = Toplevel(root)
-        self.auth_system = auth_system
-
-        self.root.title("Admin Options")
-        self.root.geometry("400x300")
-
-        Label(self.root, text="Admin Options", font=("Helvetica", 16)).pack(pady=10)
-
-        Button(self.root, text="View All Users", command=self.view_all_users).pack(pady=5)
-        Button(self.root, text="Search User", command=self.search_user).pack(pady=5)
-        Button(self.root, text="Generate Report", command=self.generate_report).pack(pady=5)
-        Button(self.root, text="Logout", command=self.logout).pack(pady=10)
-
-    def view_all_users(self):
-        users = self.auth_system.users
-        if users:
-            user_info = "\n".join([user.display_info() for user in users])
-            messagebox.showinfo("All Users", user_info)
-        else:
-            messagebox.showinfo("All Users", "No users found.")
-
-    def search_user(self):
-        email = simpledialog.askstring("Search User", "Enter the email of the user:")
-        if email:
-            user = next((u for u in self.auth_system.users if u.email == email), None)
-            if user:
-                messagebox.showinfo("User Found", user.display_info())
-            else:
-                messagebox.showerror("Error", "User not found.")
-
-    def generate_report(self):
-        messagebox.showinfo("Generate Report", "Report generation is not implemented yet.")
-
-    def logout(self):
-        self.root.destroy()
-        self.root.master.deiconify()
-
-
-class LoginApp:
-    def __init__(self, root, auth_system):
         self.root = root
         self.auth_system = auth_system
 
@@ -268,11 +231,10 @@ class LoginApp:
             elif isinstance(user, Doctor):
                 messagebox.showinfo("Login", f"Welcome, Doctor {user.name}!")
             elif isinstance(user, Patient):
-                messagebox.showinfo("Login", f"Welcome, Patient {user.name}!")
+                self.root.withdraw()
+                PatientOptions(self.root, self.auth_system, user)
         else:
             messagebox.showerror("Login Failed", "Invalid email or password.")
-
-    
 
 
 if __name__ == "__main__":
