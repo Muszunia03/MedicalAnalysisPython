@@ -1,5 +1,6 @@
 import nibabel as nib
 import matplotlib.pyplot as plt
+from matplotlib.widgets import Slider, TextBox
 import numpy as np
 
 # from nilearn import plotting
@@ -35,11 +36,23 @@ class ReturnSlice:
             self.img_displays.append(img)
             self.axes[i].axis('off')
 
-        # Adjust layout and show the figure
-        self.fig.tight_layout()
-        self.fig.canvas.draw()
+        # Adjust layout
+        plt.subplots_adjust(bottom=0.25)  # Leave space for widgets
+
+        # Add slider
+        ax_slider = plt.axes([0.2, 0.1, 0.6, 0.03], facecolor='lightgoldenrodyellow')
+        self.slider = Slider(ax_slider, 'Slice', 1, self.num_slices, valinit=self.current_slice + 1, valstep=1)
+        self.slider.on_changed(self.on_slider_change)
+
+        # Add text box
+        ax_textbox = plt.axes([0.5, 0.03, 0.02, 0.05])
+        self.text_box = TextBox(ax_textbox, 'Go to:', initial=str(self.current_slice + 1))
+        self.text_box.on_submit(self.on_text_submit)
+
+        # Connect key press events
         self.fig.canvas.mpl_connect('key_press_event', self.on_key)
-        plt.show()  # Keep the window interactive
+
+        plt.show()  # Display the interactive window
 
     def update_display(self):
         """
@@ -55,13 +68,41 @@ class ReturnSlice:
         Display the next slice.
         """
         self.current_slice = (self.current_slice + 1) % self.num_slices
-        self.update_display()
+        self.update_slider_and_display()
 
     def previous(self):
         """
         Display the previous slice.
         """
         self.current_slice = (self.current_slice - 1) % self.num_slices
+        self.update_slider_and_display()
+
+    def on_slider_change(self, val):
+        """
+        Handle slider value changes.
+        """
+        self.current_slice = int(val) - 1  # Slider is 1-based
+        self.update_display()
+
+    def on_text_submit(self, text):
+        """
+        Handle text box submissions.
+        """
+        try:
+            slice_num = int(text) - 1  # Text box is 1-based
+            if 0 <= slice_num < self.num_slices:
+                self.current_slice = slice_num
+                self.update_slider_and_display()
+            else:
+                print(f"Slice number must be between 1 and {self.num_slices}.")
+        except ValueError:
+            print("Invalid input. Please enter a number.")
+
+    def update_slider_and_display(self):
+        """
+        Sync slider position and update display.
+        """
+        self.slider.set_val(self.current_slice + 1)  # Update slider (without triggering on_slider_change)
         self.update_display()
 
     def on_key(self, event):
@@ -72,14 +113,6 @@ class ReturnSlice:
             self.next()
         elif event.key == 'left':
             self.previous()
-
-    def keep_running(self):
-        """
-        Keep the program running until the user closes the figure.
-        """
-        print("Use the right/left arrow keys to navigate slices. Close the window to exit.")
-        while plt.fignum_exists(self.fig.number):
-            plt.pause(0.1)  # Small pause to prevent high CPU usage
 
 
 #use example
