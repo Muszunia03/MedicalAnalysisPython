@@ -1,109 +1,106 @@
-import os
 import nibabel as nib
-import pyvista as pv
-import numpy as np
 import matplotlib.pyplot as plt
-from pathlib import Path
-from nilearn import plotting
-import scipy.ndimage as ndi
-
-# Function to render a specific timepoint
-def render_timepoint(time_index, plotter, num_timepoints, data):
-    plotter.clear()  # Clear the previous plot
-    # Extract the 3D volume for the current time point
-    volume_data = data[:, :, :, time_index]
-    
-    # Wrap the 3D data and add it to the plotter
-    volume = pv.wrap(volume_data)
-    plotter.add_volume(volume, cmap="Greys_r", opacity="linear")
-    
-    # Update the title to show the current time index
-    plotter.add_text(f"Timepoint: {time_index+1}/{num_timepoints}", font_size=12)
-
-    # Render the plot
-    plotter.render()
-
-# Function to display slices of a 4D volume (multiple channels) with interactive navigation
-def display_interactive_slices_multichannel(data):
-    num_slices = data.shape[2]  # Number of slices along the Z-axis
-    num_channels = data.shape[3]  # Number of channels (assumed to be 4)
-    current_slice = num_slices // 2  # Start at the middle slice
-
-    fig, axes = plt.subplots(1, num_channels, figsize=(15, 5))
-    img_displays = []
-
-    # Initialize plots for each channel
-    for i in range(num_channels):
-        axes[i].set_title(f'Channel {i + 1}, Slice {current_slice + 1}/{num_slices}')
-        img = axes[i].imshow(data[:, :, current_slice, i], cmap='gray')
-        img_displays.append(img)
-        axes[i].axis('off')
-
-    def on_key(event):
-        nonlocal current_slice
-        if event.key == 'right':
-            current_slice = (current_slice + 1) % num_slices  # Move forward
-        elif event.key == 'left':
-            current_slice = (current_slice - 1) % num_slices  # Move backward
-        # Update plots for all channels
-        for i in range(num_channels):
-            axes[i].set_title(f'Channel {i + 1}, Slice {current_slice + 1}/{num_slices}')
-            img_displays[i].set_data(data[:, :, current_slice, i])
-        fig.canvas.draw()
-
-    fig.canvas.mpl_connect('key_press_event', on_key)
-    plt.show()
-
-#wersja 2
-import nibabel as nib
 import numpy as np
-import matplotlib.pyplot as plt
 
-# Function to display slices of a 4D volume (multiple channels) with interactive navigation
-def display_interactive_slices_multichannel(volume):
-    num_slices = volume.shape[2]  # Number of slices along the Z-axis
-    num_channels = volume.shape[3]  # Number of channels (assumed to be 4)
-    current_slice = num_slices // 2  # Start at the middle slice
+# from nilearn import plotting
+# import scipy.ndimage as ndi
+#klasa do wyświetlania slice'ów, przyjmuje jako parametr array z nifti
+#funkcje:
+# 1. wyswietlenie środkowego slice
+# 2. wyswietlenie następnego
+# 3. wyswietlenie poprzedniego
 
-    fig, axes = plt.subplots(1, num_channels, figsize=(15, 5))
-    img_displays = []
+class ReturnSlice:
+    def __init__(self, slice_arr):
+        """
+        Initialize the ReturnSlice class and display the middle slice for all channels.
+        """
+        # Ensure input is 4D (X, Y, Z, Channels)
+        if slice_arr.ndim != 4:
+            raise ValueError(f"Input array must be 4D (X, Y, Z, Channels), but got shape {slice_arr.shape}")
 
-    # Initialize plots for each channel
-    for i in range(num_channels):
-        axes[i].set_title(f'Channel {i + 1}, Slice {current_slice + 1}/{num_slices}')
-        img = axes[i].imshow(volume[:, :, current_slice, i], cmap='Oranges')
-        img_displays.append(img)
-        axes[i].axis('off')
+        self.slice_arr = slice_arr
+        self.num_slices = slice_arr.shape[2]  # Number of slices along the Z-axis
+        self.num_channels = slice_arr.shape[3]  # Number of channels
+        self.current_slice = self.num_slices // 2  # Start at the middle slice
 
-    def on_key(event):
-        nonlocal current_slice
+        # Set up figure and axes
+        self.fig, self.axes = plt.subplots(1, self.num_channels, figsize=(15, 5))
+        self.img_displays = []
+
+        # Initialize plots for each channel
+        for i in range(self.num_channels):
+            self.axes[i].set_title(f'Channel {i + 1}, Slice {self.current_slice + 1}/{self.num_slices}')
+            img = self.axes[i].imshow(slice_arr[:, :, self.current_slice, i], cmap='gray')
+            self.img_displays.append(img)
+            self.axes[i].axis('off')
+
+        # Adjust layout and show the figure
+        self.fig.tight_layout()
+        self.fig.canvas.draw()
+        self.fig.canvas.mpl_connect('key_press_event', self.on_key)
+        plt.show()  # Keep the window interactive
+
+    def update_display(self):
+        """
+        Update the display for all channels to the current slice.
+        """
+        for i in range(self.num_channels):
+            self.img_displays[i].set_data(self.slice_arr[:, :, self.current_slice, i])
+            self.axes[i].set_title(f'Channel {i + 1}, Slice {self.current_slice + 1}/{self.num_slices}')
+        self.fig.canvas.draw_idle()  # Trigger an interactive redraw
+
+    def next(self):
+        """
+        Display the next slice.
+        """
+        self.current_slice = (self.current_slice + 1) % self.num_slices
+        self.update_display()
+
+    def previous(self):
+        """
+        Display the previous slice.
+        """
+        self.current_slice = (self.current_slice - 1) % self.num_slices
+        self.update_display()
+
+    def on_key(self, event):
+        """
+        Handle key press events to navigate slices.
+        """
         if event.key == 'right':
-            current_slice = (current_slice + 1) % num_slices  # Move forward
+            self.next()
         elif event.key == 'left':
-            current_slice = (current_slice - 1) % num_slices  # Move backward
-        # Update plots for all channels
-        for i in range(num_channels):
-            axes[i].set_title(f'Channel {i + 1}, Slice {current_slice + 1}/{num_slices}')
-            img_displays[i].set_data(volume[:, :, current_slice, i])
-        fig.canvas.draw()
+            self.previous()
 
-    fig.canvas.mpl_connect('key_press_event', on_key)
-    plt.show()
+    def keep_running(self):
+        """
+        Keep the program running until the user closes the figure.
+        """
+        print("Use the right/left arrow keys to navigate slices. Close the window to exit.")
+        while plt.fignum_exists(self.fig.number):
+            plt.pause(0.1)  # Small pause to prevent high CPU usage
 
-# Path to your NIfTI file (adjust the path accordingly)
-nifti_file_path = '/Users/juliamarek/Downloads/BRATS_002.nii.gz'
 
-# Load the NIfTI file
-nifti_img = nib.load(nifti_file_path)
-
-# Extract the image data as a NumPy array
-nifti_data = nifti_img.get_fdata()
-
-# Print shape to understand the dimensions of the file
-print(f"Data shape: {nifti_data.shape}")  # Expecting a 4D array (X, Y, Z, Channels)
+#use example
 
 # Display the interactive slices for all 4 channels
-display_interactive_slices_multichannel(nifti_data)
+# Load your NIfTI data
+nifti_file_path = '/Users/wojtekkurpanik/Documents/GitHub/MRIPROJECT/Data/imagesTr/BRATS_001.nii.gz'
+nifti_img = nib.load(nifti_file_path)
+nifti_data = nifti_img.get_fdata()
+
+# Ensure the data is 4D (if not, reshape or raise an error)
+if nifti_data.ndim == 3:
+    nifti_data = nifti_data[..., np.newaxis]  # Add a channel dimension if missing
+
+# Check the shape of the data
+print(f"Data shape: {nifti_data.shape}")  # Should be (X, Y, Z, Channels)
+
+# Create a ReturnSlice instance
+slicer = ReturnSlice(nifti_data)
+slicer.keep_running()
+
 
 
 
