@@ -1,4 +1,5 @@
 import sliceDisplay
+import visualization
 import nibabel as nib
 import numpy as np
 
@@ -20,3 +21,6 @@ print(f"Data shape: {nifti_data.shape}")  # Should be (X, Y, Z, Channels)
 # Create a ReturnSlice instance
 slicer = sliceDisplay.ReturnSlice(nifti_data)
 slicer.keep_running()
+
+# Example usage of 3d model:
+viewer = visualization.VisualizeScan(nifti_data)
