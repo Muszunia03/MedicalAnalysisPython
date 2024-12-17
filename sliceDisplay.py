@@ -5,10 +5,10 @@ import numpy as np
 
 # from nilearn import plotting
 # import scipy.ndimage as ndi
-#klasa do wyÅ›wietlania slice'Ã³w, przyjmuje jako parametr array z nifti
+#klasa do wyœwietlania slice'ów, przyjmuje jako parametr array z nifti
 #funkcje:
-# 1. wyswietlenie Å›rodkowego slice
-# 2. wyswietlenie nastÄ™pnego
+# 1. wyswietlenie œrodkowego slice
+# 2. wyswietlenie nastêpnego
 # 3. wyswietlenie poprzedniego
 
 class ReturnSlice:
@@ -113,7 +113,6 @@ class ReturnSlice:
             self.next()
         elif event.key == 'left':
             self.previous()
-
 
 
 
