@@ -1,0 +1,101 @@
+import nibabel as nib
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.colors import Normalize
+from matplotlib import cm
+
+def display_interactive_slices_multichannel(volume, overlay=None, threshold=0.5, glioma_threshold=0.01):
+    """
+    Displays slices of a 3D or 4D volume interactively, with an optional heatmap overlay and binary mask.
+    
+    Args:
+        volume (numpy.ndarray): 3D or 4D volume to visualize (grayscale background).
+        overlay (numpy.ndarray): Optional 3D or 4D volume to overlay as a heatmap.
+        threshold (float): Threshold for binary mask creation.
+        glioma_threshold (float): Percentage of nonzero voxels to classify as "Glioma detected".
+    """
+    is_4d = volume.ndim == 4
+    num_slices = volume.shape[2]
+    num_channels = volume.shape[3] if is_4d else 1
+    current_slice = num_slices // 2
+
+    has_overlay = overlay is not None
+    if has_overlay and overlay.shape[:3] != volume.shape[:3]:
+        raise ValueError("Overlay dimensions must match the volume dimensions (X, Y, Z).")
+
+    # Create binary mask
+    if has_overlay:
+        binary_mask = (overlay > threshold).astype(np.uint8)
+        glioma_detected = np.sum(binary_mask) / binary_mask.size > glioma_threshold  # Check glioma presence
+
+        print(f"Glioma detected: {'Yes' if glioma_detected else 'No'}")  # Print glioma detection result
+
+    fig, axes = plt.subplots(1, num_channels, figsize=(15, 5)) if num_channels > 1 else (plt.figure(figsize=(5, 5)), [plt.gca()])
+    img_displays, overlay_displays, binary_displays = [], [], []
+
+    for i in range(num_channels):
+        title = f'Channel {i + 1}, Slice {current_slice + 1}/{num_slices}' if is_4d else f'Slice {current_slice + 1}/{num_slices}'
+        
+        gray_img = axes[i].imshow(volume[:, :, current_slice] if not is_4d else volume[:, :, current_slice, i], cmap='gray', alpha=1.0)
+        img_displays.append(gray_img)
+
+        if has_overlay:
+            heatmap = axes[i].imshow(overlay[:, :, current_slice], cmap='viridis', alpha=0.5, norm=Normalize(vmin=overlay.min(), vmax=overlay.max()))
+            overlay_displays.append(heatmap)
+            
+            binary_mask_img = axes[i].imshow(binary_mask[:, :, current_slice], cmap='Reds', alpha=0.4)
+            binary_displays.append(binary_mask_img)
+
+        axes[i].set_title(title)
+        axes[i].axis('off')
+
+    if has_overlay:
+        cbar = fig.colorbar(cm.ScalarMappable(norm=Normalize(vmin=overlay.min(), vmax=overlay.max()), cmap='viridis'), ax=axes, orientation='horizontal', fraction=0.03, pad=0.04)
+        cbar.set_label("Overlay Intensity")
+
+    def on_key(event):
+        nonlocal current_slice
+        if event.key == 'right':
+            current_slice = (current_slice + 1) % num_slices
+        elif event.key == 'left':
+            current_slice = (current_slice - 1) % num_slices
+        elif event.key == 'b':
+            for binary_display in binary_displays:
+                binary_display.set_alpha(0.0 if binary_display.get_alpha() > 0 else 0.4)
+
+        for i in range(num_channels):
+            title = f'Channel {i + 1}, Slice {current_slice + 1}/{num_slices}' if is_4d else f'Slice {current_slice + 1}/{num_slices}'
+            img_displays[i].set_data(volume[:, :, current_slice] if not is_4d else volume[:, :, current_slice, i])
+            axes[i].set_title(title)
+
+            if has_overlay:
+                overlay_displays[i].set_data(overlay[:, :, current_slice])
+                binary_displays[i].set_data(binary_mask[:, :, current_slice])
+
+        fig.canvas.draw()
+
+    fig.canvas.mpl_connect('key_press_event', on_key)
+    plt.show()
+
+# File paths
+volume_path = 'C:/Users/jas1ek/nnUNet/inference_output/BRATS_002.nii.gz'
+overlay_path = 'C:/Users/jas1ek/nnUNet/raw/Dataset001_BrainTumour/imagesTr/BRATS_002_0001.nii.gz'
+
+# Load the NIfTI files
+volume_img = nib.load(volume_path)
+volume_data = volume_img.get_fdata()
+
+# Load the overlay if it exists
+try:
+    overlay_img = nib.load(overlay_path)
+    overlay_data = overlay_img.get_fdata()
+except FileNotFoundError:
+    overlay_data = None
+
+# Print the shape
+print(f"Volume shape: {volume_data.shape}")
+if overlay_data is not None:
+    print(f"Overlay shape: {overlay_data.shape}")
+
+# Display interactive visualization with glioma detection
+display_interactive_slices_multichannel(volume_data, overlay=overlay_data, threshold=0.5, glioma_threshold=0.01)
