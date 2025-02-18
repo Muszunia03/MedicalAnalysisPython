@@ -45,7 +45,8 @@ We are pleased with the results so far and are considering further improvements,
 - Providing a binary classification output (Yes/No) for glioma detection.
 - Enhancing visualization options and user interaction features.
 
-
+## Files for pre-trained model
+https://drive.google.com/drive/folders/1YTZY4t1tHmYB4b2UG-eUyi8nrXl834xb?usp=sharing
 ## Usage
    
 # 1. Setup nnUNetv2
